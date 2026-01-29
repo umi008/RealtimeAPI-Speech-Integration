@@ -1,39 +1,98 @@
-# OpenAI Realtime Console
+# OpenAI Realtime Console - API de Voz en Tiempo Real
 
-This is an example application showing how to use the [OpenAI Realtime API](https://platform.openai.com/docs/guides/realtime) with [WebRTC](https://platform.openai.com/docs/guides/realtime-webrtc).
+## Descripción del Proyecto
 
-## Installation and usage
+Aplicación de demostración que implementa la [OpenAI Realtime API](https://platform.openai.com/docs/guides/realtime) con soporte para [WebRTC](https://platform.openai.com/docs/guides/realtime-webrtc). Esta consola permite interacciones de voz en tiempo real con asistentes de IA configurables, integrando capacidades de automatización de formularios y múltiples roles especializados.
 
-Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys). Create a `.env` file from the example file and set your API key in there:
+El sistema utiliza una arquitectura basada en Express para servir el frontend React, con Vite como herramienta de build. Facilita el envío y recepción de eventos de la Realtime API a través del canal de datos WebRTC y permite configurar function calling desde el cliente.
+
+## Roles Disponibles (System Prompts)
+
+La aplicación incluye múltiples roles preconfigurados en [`system_prompts/`](./system_prompts/) para diferentes casos de uso:
+
+- 🔧 **Default** - Asistente general de voz, amigable y profesional para tareas diversas
+- 🎨 **Creative Designer** - Asistente especializado en diseño creativo y visual
+- 📊 **Event Planner** - Planificador de eventos y coordinación logística
+- 🛋️ **Furniture Salesman** - Asistente de ventas especializado en muebles
+- 👥 **HR Recruiter** - Reclutador de recursos humanos y gestión de talento
+- 🏠 **Jarvis House Automation** - Asistente de automatización doméstica estilo Jarvis
+- 📐 **Math Tutor** - Tutor matemático para enseñanza y resolución de problemas
+- 🏥 **Medical Receptionist** - Recepcionista médico para gestión de citas y consultas
+- 🍽️ **Restaurant Assistant** - Asistente para restaurantes, pedidos y reservaciones
+- 💻 **Tech Support** - Soporte técnico especializado en resolución de problemas de tecnología
+
+## Configuración de Interfaz
+
+La interfaz de usuario proporciona controles intuitivos a través de tres componentes principales:
+
+### Controles de Sesión ([`SessionControls.jsx`](client/components/SessionControls.jsx))
+
+- **Iniciar/Detener Sesión**: Botón principal para establecer o cerrar la conexión WebSocket con OpenAI
+- **Envío de Mensajes de Texto**: Input con soporte para envío mediante tecla Enter o botón dedicado
+- **Estado Visual**: Indicadores claros de estado (iniciando sesión, sesión activa, desconectado)
+
+### Selector de Configuración ([`ConfigurationSelector.jsx`](client/components/ConfigurationSelector.jsx))
+
+Panel de configuración organizado en tres pestañas:
+
+#### 🤖 Modelo
+- Selección del modelo de IA (gpt-4o-realtime-preview, gpt-4o-mini-realtime-preview)
+- Visualización de precios por millón de tokens para audio y texto
+- Información de costos: Input, Cached Input y Output
+
+#### 📝 System Prompt
+- Lista dinámica de roles disponibles cargados desde [`system_prompts/`](./system_prompts/)
+- Cambio dinámico de personalidad del asistente
+- Notificación de aplicación en la próxima sesión
+
+#### 🔊 Audio
+- **Prefijo de silencio**: Slider ajustable (0-2000ms, paso 50ms) para configurar el padding de audio inicial
+- **Duración del silencio**: Slider (0-2000ms, paso 50ms) para ajustar el tiempo de detección de silencio
+- **Umbral de detección**: Slider (0.0-1.0, paso 0.05) para sensibilidad del VAD (Voice Activity Detection)
+- **Tipo de reducción de ruido**: Selector entre `near_field` (campo cercano) y `far_field` (campo lejano)
+- **Voz**: Selección de voz sintética (Alloy, Echo, Fable, Onyx, Nova, Shimmer, Marin)
+
+### Panel de Eventos ([`EventLog.jsx`](client/components/EventLog.jsx))
+
+Visualización en tiempo real de payloads JSON para eventos de cliente y servidor, útil para debugging y análisis de la comunicación con la API.
+
+## Instalación y Uso
+
+Requiere una API key de OpenAI - [crea una aquí](https://platform.openai.com/settings/api-keys). Crea un archivo `.env` desde el ejemplo:
 
 ```bash
 cp .env.example .env
 ```
 
-Running this application locally requires [Node.js](https://nodejs.org/) to be installed. Install dependencies for the application with:
+Configura tu API key en el archivo `.env`:
+
+```
+OPENAI_API_KEY=tu_api_key_aqui
+```
+
+Requiere [Node.js](https://nodejs.org/) instalado. Instala las dependencias:
 
 ```bash
 npm install
 ```
 
-Start the application server with:
+Inicia el servidor de desarrollo:
 
 ```bash
 npm run dev
 ```
 
-This should start the console application on [http://localhost:3000](http://localhost:3000).
+La aplicación estará disponible en [http://localhost:3000](http://localhost:3000).
 
-This application is a minimal template that uses [express](https://expressjs.com/) to serve the React frontend contained in the [`/client`](./client) folder. The server is configured to use [vite](https://vitejs.dev/) to build the React frontend.
+## Arquitectura del Sistema
 
-This application shows how to send and receive Realtime API events over the WebRTC data channel and configure client-side function calling. You can also view the JSON payloads for client and server events using the logging panel in the UI.
+| Componente | Responsabilidad |
+|------------|-----------------|
+| **Servidor Backend** ([`server.js`](server.js)) | Orquesta conexiones WebSocket, provee tokens de autenticación, expone endpoints de configuración |
+| **Cliente React** ([`client/`](client/)) | Interfaz de usuario, gestión de estado de sesión, visualización de transcripciones |
+| **Servicio de Automatización** ([`services/formAutomationService.js`](services/formAutomationService.js)) | Automatización de formularios web mediante Puppeteer |
+| **Cargador de Prompts** ([`utils/systemPromptLoader.js`](utils/systemPromptLoader.js)) | Carga dinámica de roles desde [`system_prompts/`](./system_prompts/) |
 
-For a more comprehensive example, see the [OpenAI Realtime Agents](https://github.com/openai/openai-realtime-agents) demo built with Next.js, using an agentic architecture inspired by [OpenAI Swarm](https://github.com/openai/swarm).
-
-## Previous WebSockets version
-
-The previous version of this application that used WebSockets on the client (not recommended in browsers) [can be found here](https://github.com/openai/openai-realtime-console/tree/websockets).
-
-## License
+## Licencia
 
 MIT
